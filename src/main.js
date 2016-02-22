@@ -1,8 +1,17 @@
 import twgl from 'twgl.js';
-import {cls, circ, pset} from './api/graphics.js';
+import {cls, circ, pset, rectfill} from './api/graphics.js';
+import {mouseX, mouseY, _onMouseMove, _onMouseDown, _onMouseUp, mouseBtn} from './api/input.js';
 import {getRandomNumber} from './utils.js';
 
 export function start(canvas, config) {
+  canvas = document.getElementById(canvas);
+  canvas.addEventListener('mousemove', _onMouseMove)
+  canvas.addEventListener('mousedown', _onMouseDown);
+  window.addEventListener('mouseup', _onMouseUp);
+  canvas.addEventListener('contextmenu', function (ev) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+  })
   gl(canvas);
   programInfo();
   bufferInfo();
@@ -18,7 +27,7 @@ export function start(canvas, config) {
 let _gl;
 export function gl(canvas) {
   if (!_gl) {
-    _gl = twgl.getWebGLContext(document.getElementById(canvas));
+    _gl = twgl.getWebGLContext(canvas);
   }
   return _gl;
 }
@@ -155,11 +164,9 @@ function render(time) {
   twgl.resizeCanvasToDisplaySize(gl_.canvas, window.devicePixelRatio);
   gl_.viewport(0, 0, gl_.canvas.width, gl_.canvas.height);
   cls();
-  for (let x = 0; x < pixWidth_; x++) {
-    for (let y = 0; y < pixHeight_; y++) {
-      pset(x, y, getRandomNumber(15));
-    }
-  }
+  let cursorColor = mouseBtn(0) ? 6 : mouseBtn(1) ? 2 : 3;
+  rectfill(mouseX()-2, mouseY()-2, mouseX()+2, mouseY()+2, cursorColor);
+
   flip();
 
   gl_.useProgram(programInfo_.program);
