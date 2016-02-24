@@ -1,17 +1,23 @@
 import twgl from 'twgl.js';
 import {pixHeight, pixWidth, screenBuffer} from '../main.js';
+import {peek, poke, memcpy, memset} from './memory.js';
+import {getHigh4Bits, getLow4Bits, combineHighLow} from '../utils.js';
 
 export function makeColor(r, g, b) {
 	return Uint8Array.of(r, g, b);
 }
 
 function getPixIdx(x, y) {
-	return (x + ((pixHeight() - y -1) * pixWidth())) * 3;
+	return (x + ((pixHeight() - y - 1) * pixWidth()));
 }
 
 export function pget(x, y) {
 	const pixIdx = getPixIdx(x, y);
-	return screenBuffer().slice(pixIdx, pixIdx + 3);
+	if (pixIdx % 2 === 0) {
+		return getLow4Bits(peek((pixIdx/2) + 0x6000));
+	} else {
+		return getHigh4Bits(peek(Math.floor(pixIdx/2) + 0x6000));
+	}
 }
 
 export function pset(x, y, col) {
@@ -20,7 +26,11 @@ export function pset(x, y, col) {
   }
 	const pixIdx = getPixIdx(x, y);
 	col = getColor(col);
-  screenBuffer().set(col, pixIdx);
+  if (x % 2 === 0) {
+  	poke(Math.floor(pixIdx/2) + 0x6000, combineHighLow(getHigh4Bits(peek(Math.floor(pixIdx/2) + 0x6000)), col));
+  } else {
+		poke(Math.floor(pixIdx/2) + 0x6000, combineHighLow(col, getLow4Bits(peek(Math.floor(pixIdx/2) + 0x6000))));
+	}
 }
 
 export function rectfill(x0, y0, x1, y1, col) {
@@ -126,7 +136,7 @@ export function line(x0, y0, x1, y1, col){
 }
 
 export function cls() {
-	rectfill(0, 0, pixWidth(), pixHeight(), BLACK);
+	memset(0x6000, 0, 128*64);
 }
 
 const BLACK = makeColor(0,0,0);
@@ -160,11 +170,13 @@ export function color(col) {
 }
 
 function getColor(idx) {
-	if (idx instanceof Uint8Array) {
+	if (idx >= 0 && idx < 16) {
 		return idx;
-	} else if (idx >= 0 && idx < 16) {
-		return palette[idx];
 	} else {
-		return palette[_defaultColor];
+		return _defaultColor;
 	}
+}
+
+export function _getColor(idx) {
+	return palette[idx];
 }

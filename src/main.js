@@ -1,17 +1,19 @@
 import twgl from 'twgl.js';
-import {cls, circ, pset, rectfill} from './api/graphics.js';
-import {mouseX, mouseY, _onMouseMove, _onMouseDown, _onMouseUp, mouseBtn} from './api/input.js';
+import {cls, circ, pset, line, rectfill, _getColor, pget} from './api/graphics.js';
+import {mouseX, mouseY, _onMouseMove, _onMouseDown, _onMouseUp, mouseBtn, _onKeyDown, _onKeyUp, isXInScreen, isYInScreen} from './api/input.js';
 import {getRandomNumber} from './utils.js';
 
 export function start(canvas, config) {
   canvas = document.getElementById(canvas);
-  canvas.addEventListener('mousemove', _onMouseMove)
+  window.addEventListener('mousemove', _onMouseMove)
   canvas.addEventListener('mousedown', _onMouseDown);
   window.addEventListener('mouseup', _onMouseUp);
   canvas.addEventListener('contextmenu', function (ev) {
     ev.preventDefault();
     ev.stopImmediatePropagation();
   })
+  window.addEventListener('keydown', _onKeyDown);
+  window.addEventListener('keyup', _onKeyUp);
   gl(canvas);
   programInfo();
   bufferInfo();
@@ -153,7 +155,7 @@ export function uniforms() {
   }
   return _uniforms;
 }
-
+let x = -1, y = -1;
 function render(time) {
   const gl_ = gl();
   const programInfo_ = programInfo();
@@ -163,9 +165,18 @@ function render(time) {
   const pixHeight_ = pixHeight();
   twgl.resizeCanvasToDisplaySize(gl_.canvas, window.devicePixelRatio);
   gl_.viewport(0, 0, gl_.canvas.width, gl_.canvas.height);
-  cls();
+  // cls();
+  // for (let x = 0; x < pixWidth_; x++) {
+  //   for (let y = 0; y < pixHeight_; y++) {
+  //     pset(x,y,getRandomNumber(16))
+  //   }
+  // }
   let cursorColor = mouseBtn(0) ? 6 : mouseBtn(1) ? 2 : 3;
-  rectfill(mouseX()-2, mouseY()-2, mouseX()+2, mouseY()+2, cursorColor);
+  if ((isXInScreen(x) && isYInScreen(y)) || (isXInScreen(mouseX()) && isYInScreen(mouseY()))) {
+    line(x,y,mouseX(), mouseY(), cursorColor);
+  }
+  x = mouseX();
+  y = mouseY();
 
   flip();
 
@@ -178,5 +189,13 @@ function render(time) {
 }
 
 export function flip() {
+  const width = pixWidth();
+  const height = pixHeight();
+  for (var x = 0; x < width; x++) {
+    for (var y = 0; y < height; y++) {
+      const pixIdx = (x + ((height - y -1) * width)) * 3;
+      screenBuffer().set(_getColor(pget(x, y)), pixIdx);
+    }
+  }
 	twgl.setTextureFromArray(gl(), texture(), screenBuffer(), updateOptions());
 }
