@@ -165,12 +165,12 @@ function render(time) {
   const pixHeight_ = pixHeight();
   twgl.resizeCanvasToDisplaySize(gl_.canvas, window.devicePixelRatio);
   gl_.viewport(0, 0, gl_.canvas.width, gl_.canvas.height);
-  // cls();
-  // for (let x = 0; x < pixWidth_; x++) {
-  //   for (let y = 0; y < pixHeight_; y++) {
-  //     pset(x,y,getRandomNumber(16))
-  //   }
-  // }
+  cls();
+  for (let x = 0; x < pixWidth_; x++) {
+    for (let y = 0; y < pixHeight_; y++) {
+      pset(x,y,getRandomNumber(16))
+    }
+  }
   let cursorColor = mouseBtn(0) ? 6 : mouseBtn(1) ? 2 : 3;
   if ((isXInScreen(x) && isYInScreen(y)) || (isXInScreen(mouseX()) && isYInScreen(mouseY()))) {
     line(x,y,mouseX(), mouseY(), cursorColor);
